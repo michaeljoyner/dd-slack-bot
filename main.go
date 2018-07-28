@@ -98,6 +98,16 @@ func main() {
 					}
 				}(mess)
 
+			case "cost":
+				go func(m Message) {
+					summary, err := dymantic.TotalMonthlyHostingCost()
+					if err != nil {
+						fmt.Printf("could not fetch sites: %v", err)
+					}
+					txt := fmt.Sprintf("Current monthly hosting cost is *%v*", summary.PresentableCost)
+					ms := Message{ID: atomic.AddUint64(&counter, 1), Type: "message", Channel: m.Channel, Text: txt}
+					websocket.JSON.Send(ws, ms)
+				}(mess)
 			default:
 				m = Message{ID: atomic.AddUint64(&counter, 1), Type: "message", Channel: mess.Channel, Text: "I don't know what you mean, but I like the way you say it."}
 				websocket.JSON.Send(ws, m)
