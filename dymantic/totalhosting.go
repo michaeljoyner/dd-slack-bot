@@ -14,15 +14,13 @@ type HostingCostSummary struct {
 	PresentableCost string `json:"presentable_cost"`
 }
 
-//TotalMonthlyHostingCost fetches a hosting cost summary
-func TotalMonthlyHostingCost() (HostingCostSummary, error) {
-	url := "http://secretadmin.dymanticdesign.com/admin-api/sites/hosting-cost"
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func getWithAuthentication(path, token string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, "http://secretadmin.dymanticdesign.com/admin-api"+path, nil)
 	if err != nil {
-		return HostingCostSummary{}, err
+		return []byte{}, err
 	}
 
-	req.Header.Add("Authentication", "Bearer: "+os.Getenv("SLACK_DD_TOKEN"))
+	req.Header.Add("Authentication", "Bearer: "+token)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Accept", "application/json")
 
@@ -31,7 +29,7 @@ func TotalMonthlyHostingCost() (HostingCostSummary, error) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		return HostingCostSummary{}, err
+		return []byte{}, err
 	}
 
 	defer resp.Body.Close()
@@ -39,13 +37,23 @@ func TotalMonthlyHostingCost() (HostingCostSummary, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		return HostingCostSummary{}, err
+		return []byte{}, err
 	}
+
+	return body, nil
+}
+
+//TotalMonthlyHostingCost fetches a hosting cost summary
+func TotalMonthlyHostingCost() (HostingCostSummary, error) {
 	var summary HostingCostSummary
 
-	jerr := json.Unmarshal(body, &summary)
+	body, err := getWithAuthentication("/sites/hosting-cost", os.Getenv("SLACK_DD_TOKEN"))
 
-	if jerr != nil {
+	if err != nil {
+		return HostingCostSummary{}, err
+	}
+
+	if jerr := json.Unmarshal(body, &summary); jerr != nil {
 		return HostingCostSummary{}, jerr
 	}
 

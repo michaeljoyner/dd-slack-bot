@@ -2,8 +2,6 @@ package dymantic
 
 import (
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
 	"os"
 )
 
@@ -17,35 +15,15 @@ type Site struct {
 
 //DueForHosting returns sites that require hosting payments in the next 31 days
 func DueForHosting() ([]Site, error) {
-	url := "http://secretadmin.dymanticdesign.com/admin-api/sites/due-payment"
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Authentication", "Bearer: "+os.Getenv("SLACK_DD_TOKEN"))
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Accept", "application/json")
-
-	client := &http.Client{}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-		return nil, err
-	}
 	var sites []Site
-	jerr := json.Unmarshal(body, &sites)
 
-	if jerr != nil {
+	body, err := getWithAuthentication("/sites/due-payment", os.Getenv("SLACK_DD_TOKEN"))
+
+	if err != nil {
+		return nil, err
+	}
+
+	if jerr := json.Unmarshal(body, &sites); jerr != nil {
 		return nil, jerr
 	}
 
