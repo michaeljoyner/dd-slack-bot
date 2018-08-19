@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -29,6 +30,12 @@ type Message struct {
 	Type    string `json:"type"`
 	Channel string `json:"channel"`
 	Text    string `json:"text"`
+}
+
+//Ping represents a slack ping mesage
+type Ping struct {
+	ID   uint64 `json:"id"`
+	Type string `json:"type"`
 }
 
 //Connection holds the websocket connection and the connected bots user
@@ -77,4 +84,15 @@ func ConnectToRTM(token string) (Connection, error) {
 	}
 
 	return Connection{WS: ws, Self: start.Self}, nil
+}
+
+//KeepAlive will send pings into heartbeat channel
+func (c *Connection) KeepAlive(heartbeat chan Ping) {
+	ticker := time.NewTicker(30 * time.Second)
+	go func() {
+		for range ticker.C {
+			p := Ping{}
+			heartbeat <- p
+		}
+	}()
 }
