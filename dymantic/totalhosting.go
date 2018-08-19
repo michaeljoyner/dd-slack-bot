@@ -15,7 +15,7 @@ type HostingCostSummary struct {
 }
 
 func getWithAuthentication(path, token string) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet, "http://secretadmin.dymanticdesign.com/admin-api"+path, nil)
+	req, err := http.NewRequest(http.MethodGet, "https://dymanticdesign.com/admin-api"+path, nil)
 	if err != nil {
 		return []byte{}, err
 	}
